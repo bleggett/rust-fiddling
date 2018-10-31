@@ -18,27 +18,15 @@ pub fn run(cfg: Config) -> Result<(), Box<dyn Error>>{
 }
 
 pub fn search<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
-    let mut results = Vec::new();
-
-    for line in contents.lines() {
-        if line.contains(query) {
-            results.push(line);
-        }
-
-    }
-    results
+    contents.lines()
+        .filter(|line| line.contains(query))
+        .collect()
 }
 
 pub fn search_case_insensitive<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
-    let mut results = Vec::new();
-
-    for line in contents.lines() {
-        if line.to_lowercase().contains(&query.to_lowercase()) {
-            results.push(line);
-        }
-
-    }
-    results
+    contents.lines()
+        .filter(|line| line.to_lowercase().contains(&query.to_lowercase()))
+        .collect()
 }
 
 pub struct Config {
@@ -48,13 +36,22 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(args: &[String]) -> Result<Config, &'static str> {
-        if args.len() < 3 {
-            return Err("Not enough arguments");
-        }
+    pub fn new(mut args: std::env::Args) -> Result<Config, &'static str> {
+        args.next();
+
+        let query = match args.next() {
+            Some(arg) => arg,
+            None => return Err("No query string found")
+        };
+
+        let filename = match args.next() {
+            Some(arg) => arg,
+            None => return Err("No filename string found")
+        };
+
         Ok(Config {
-            query: args[1].clone(),
-            filename: args[2].clone(),
+            query,
+            filename,
             case_sensitive: env::var("CASE_INSENSITIVE").is_err()
         })
     }
